@@ -76,7 +76,7 @@ var _ = Describe("Metrics", func() {
 		})
 
 		verifyGaugeCall := func(statKey string, expectedCount int64, expectedRate float32, index int) {
-			totalStat, count, rate, _ := stats.GaugeArgsForCall(index)
+			totalStat, count, rate := stats.GaugeArgsForCall(index)
 			Expect(totalStat).To(Equal(statKey))
 			Expect(count).To(BeNumerically("==", expectedCount))
 			Expect(rate).To(BeNumerically("==", expectedRate))

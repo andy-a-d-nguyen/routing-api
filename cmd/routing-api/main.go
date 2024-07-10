@@ -27,7 +27,7 @@ import (
 	"code.cloudfoundry.org/routing-api/models"
 	"code.cloudfoundry.org/routing-api/uaaclient"
 	"code.cloudfoundry.org/tlsconfig"
-	"github.com/cactus/go-statsd-client/v5/statsd"
+	"github.com/cactus/go-statsd-client/v4/statsd"
 	"github.com/cloudfoundry/dropsonde"
 	uuid "github.com/nu7hatch/gouuid"
 	"github.com/tedsuo/ifrit"
@@ -91,6 +91,14 @@ func main() {
 	prefix := "routing_api"
 	// lint :ignore SA1019
 	statsdClient, err := statsd.NewBufferedClient(cfg.StatsdEndpoint, prefix, cfg.StatsdClientFlushInterval, 512)
+	// statsdConfig := &statsd.ClientConfig{
+	// 	Address:       cfg.StatsdEndpoint,
+	// 	Prefix:        prefix,
+	// 	FlushInterval: cfg.StatsdClientFlushInterval,
+	// 	FlushBytes:    512,
+	// 	UseBuffered:   true,
+	// }
+	// statsdClient, err := statsd.NewClientWithConfig(statsdConfig)
 	if err != nil {
 		logger.Error("failed-to-create-statsd-client", err)
 		os.Exit(1)
