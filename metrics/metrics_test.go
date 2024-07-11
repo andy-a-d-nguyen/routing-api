@@ -21,7 +21,7 @@ var _ = Describe("Metrics", func() {
 		var (
 			database       *fake_db.FakeDB
 			reporter       *MetricsReporter
-			stats          fake_statsd.FakeStatter
+			stats          *fake_statsd.FakeStatter
 			resultsChan    chan db.Event
 			tcpResultsChan chan db.Event
 			sigChan        chan os.Signal
@@ -31,7 +31,7 @@ var _ = Describe("Metrics", func() {
 
 		BeforeEach(func() {
 			database = &fake_db.FakeDB{}
-			stats = fake_statsd.FakeStatter{}
+			stats = &fake_statsd.FakeStatter{}
 
 			tickChan = make(chan time.Time, 1)
 			logger := lagertest.NewTestLogger("metrics")

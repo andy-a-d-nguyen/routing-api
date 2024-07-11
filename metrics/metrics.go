@@ -8,7 +8,6 @@ import (
 
 	"code.cloudfoundry.org/lager/v3"
 	"code.cloudfoundry.org/routing-api/db"
-	"github.com/cactus/go-statsd-client/v4/statsd"
 )
 
 const (
@@ -20,43 +19,6 @@ const (
 	KeyRefreshEvents       = "key_refresh_events"
 )
 
-//go:generate counterfeiter . StatSender
-type StatSender interface {
-	Inc(string, int64, float32) error
-	Dec(string, int64, float32) error
-	Gauge(string, int64, float32) error
-	GaugeDelta(string, int64, float32) error
-	Timing(string, int64, float32) error
-	TimingDuration(string, time.Duration, float32) error
-	Set(string, string, float32) error
-	SetInt(string, int64, float32) error
-	Raw(string, string, float32) error
-}
-
-//go:generate counterfeiter . Sender
-type Sender interface {
-	Send(data []byte) (int, error)
-	Close() error
-}
-
-//go:generate counterfeiter . SamplerFunc
-type SamplerFunc func(float32) bool
-
-//go:generate counterfeiter . Statter
-type Statter interface {
-	StatSender
-	NewSubStatter(string) SubStatter
-	SetPrefix(string)
-	Close() error
-}
-
-//go:generate counterfeiter . SubStatter
-type SubStatter interface {
-	StatSender
-	SetSamplerFunc(SamplerFunc)
-	NewSubStatter(string) SubStatter
-}
-
 // type PartialStatsdClient interface {
 // 	GaugeDelta(stat string, value int64, rate float32) error
 // 	Gauge(stat string, value int64, rate float32) error
@@ -65,7 +27,7 @@ type SubStatter interface {
 type MetricsReporter struct {
 	db db.DB
 	// stats  PartialStatsdClient
-	stats  statsd.Statter
+	stats  Statter
 	ticker *time.Ticker
 	logger lager.Logger
 }
@@ -75,7 +37,7 @@ var (
 	totalKeyRefreshEventCount int64
 )
 
-func NewMetricsReporter(database db.DB, stats statsd.Statter, ticker *time.Ticker, logger lager.Logger) *MetricsReporter {
+func NewMetricsReporter(database db.DB, stats Statter, ticker *time.Ticker, logger lager.Logger) *MetricsReporter {
 	return &MetricsReporter{db: database, stats: stats, ticker: ticker, logger: logger}
 }
 
