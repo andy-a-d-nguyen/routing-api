@@ -90,15 +90,15 @@ func main() {
 
 	prefix := "routing_api"
 	// lint :ignore SA1019
-	statsdClient, err := statsd.NewBufferedClient(cfg.StatsdEndpoint, prefix, cfg.StatsdClientFlushInterval, 512)
-	// statsdConfig := &statsd.ClientConfig{
-	// 	Address:       cfg.StatsdEndpoint,
-	// 	Prefix:        prefix,
-	// 	FlushInterval: cfg.StatsdClientFlushInterval,
-	// 	FlushBytes:    512,
-	// 	UseBuffered:   true,
-	// }
-	// statsdClient, err := statsd.NewClientWithConfig(statsdConfig)
+	// statsdClient, err := statsd.NewBufferedClient(cfg.StatsdEndpoint, prefix, cfg.StatsdClientFlushInterval, 512)
+	statsdConfig := &statsd.ClientConfig{
+		Address:       cfg.StatsdEndpoint,
+		Prefix:        prefix,
+		FlushInterval: cfg.StatsdClientFlushInterval,
+		FlushBytes:    512,
+		// UseBuffered:   true,
+	}
+	statsdClient, err := statsd.NewClientWithConfig(statsdConfig)
 	if err != nil {
 		logger.Error("failed-to-create-statsd-client", err)
 		os.Exit(1)
