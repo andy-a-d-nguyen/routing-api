@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"code.cloudfoundry.org/routing-api/metrics"
+	"github.com/cactus/go-statsd-client/v4/statsd"
 )
 
 type FakeStatter struct {
@@ -71,16 +71,16 @@ type FakeStatter struct {
 	incReturnsOnCall map[int]struct {
 		result1 error
 	}
-	NewSubStatterStub        func(string) metrics.SubStatter
+	NewSubStatterStub        func(string) statsd.SubStatter
 	newSubStatterMutex       sync.RWMutex
 	newSubStatterArgsForCall []struct {
 		arg1 string
 	}
 	newSubStatterReturns struct {
-		result1 metrics.SubStatter
+		result1 statsd.SubStatter
 	}
 	newSubStatterReturnsOnCall map[int]struct {
-		result1 metrics.SubStatter
+		result1 statsd.SubStatter
 	}
 	RawStub        func(string, string, float32) error
 	rawMutex       sync.RWMutex
@@ -461,7 +461,7 @@ func (fake *FakeStatter) IncReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *FakeStatter) NewSubStatter(arg1 string) metrics.SubStatter {
+func (fake *FakeStatter) NewSubStatter(arg1 string) statsd.SubStatter {
 	fake.newSubStatterMutex.Lock()
 	ret, specificReturn := fake.newSubStatterReturnsOnCall[len(fake.newSubStatterArgsForCall)]
 	fake.newSubStatterArgsForCall = append(fake.newSubStatterArgsForCall, struct {
@@ -486,7 +486,7 @@ func (fake *FakeStatter) NewSubStatterCallCount() int {
 	return len(fake.newSubStatterArgsForCall)
 }
 
-func (fake *FakeStatter) NewSubStatterCalls(stub func(string) metrics.SubStatter) {
+func (fake *FakeStatter) NewSubStatterCalls(stub func(string) statsd.SubStatter) {
 	fake.newSubStatterMutex.Lock()
 	defer fake.newSubStatterMutex.Unlock()
 	fake.NewSubStatterStub = stub
@@ -499,26 +499,26 @@ func (fake *FakeStatter) NewSubStatterArgsForCall(i int) string {
 	return argsForCall.arg1
 }
 
-func (fake *FakeStatter) NewSubStatterReturns(result1 metrics.SubStatter) {
+func (fake *FakeStatter) NewSubStatterReturns(result1 statsd.SubStatter) {
 	fake.newSubStatterMutex.Lock()
 	defer fake.newSubStatterMutex.Unlock()
 	fake.NewSubStatterStub = nil
 	fake.newSubStatterReturns = struct {
-		result1 metrics.SubStatter
+		result1 statsd.SubStatter
 	}{result1}
 }
 
-func (fake *FakeStatter) NewSubStatterReturnsOnCall(i int, result1 metrics.SubStatter) {
+func (fake *FakeStatter) NewSubStatterReturnsOnCall(i int, result1 statsd.SubStatter) {
 	fake.newSubStatterMutex.Lock()
 	defer fake.newSubStatterMutex.Unlock()
 	fake.NewSubStatterStub = nil
 	if fake.newSubStatterReturnsOnCall == nil {
 		fake.newSubStatterReturnsOnCall = make(map[int]struct {
-			result1 metrics.SubStatter
+			result1 statsd.SubStatter
 		})
 	}
 	fake.newSubStatterReturnsOnCall[i] = struct {
-		result1 metrics.SubStatter
+		result1 statsd.SubStatter
 	}{result1}
 }
 
@@ -915,4 +915,4 @@ func (fake *FakeStatter) recordInvocation(key string, args []interface{}) {
 	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
-var _ metrics.Statter = new(FakeStatter)
+var _ statsd.Statter = new(FakeStatter)
