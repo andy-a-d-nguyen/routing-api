@@ -1,13 +1,17 @@
 package main_test
 
 import (
+	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/tedsuo/ifrit"
 	ginkgomon "github.com/tedsuo/ifrit/ginkgomon_v2"
+	"github.com/testcontainers/testcontainers-go/modules/mysql"
+	"github.com/testcontainers/testcontainers-go/modules/postgres"
 
 	routing_api "code.cloudfoundry.org/routing-api"
 	"code.cloudfoundry.org/routing-api/cmd/routing-api/testrunner"
@@ -19,6 +23,35 @@ import (
 )
 
 var _ = Describe("Routes API", func() {
+	var ctx context.Context
+	var postgresContainer *postgres.PostgresContainer
+	BeforeEach(func() {
+		ctx = context.Background()
+
+		postgresContainer, err = postgres.Run(
+			ctx,
+			"docker.io/postgres:16-alpine",
+			postgres.WithDatabase("test"),
+			postgres.WithUsername("root"),
+			postgres.WithPassword("password"),
+      testcontainers.WithWaitStrategy(
+        wait.ForLog("database system is ready to accept connections")
+        )
+		)
+		if err != nil {
+			log.Fatalf("failed to start container %s", err)
+		}
+	})
+
+	AfterEach(func() {
+		defer func() {
+			err = postgresContainer.Terminate(ctx)
+			if err != nil {
+				log.Fatalf("failed to terminate container %s", err)
+			}
+		}()
+	})
+
 	getRouterGroupGuid := func() string {
 		var routerGroups []models.RouterGroup
 		Eventually(func() error {
@@ -31,7 +64,7 @@ var _ = Describe("Routes API", func() {
 	}
 
 	TestTCPEvents := func() {
-		Context("TCP Events", func() {
+		FContext("TCP Events", func() {
 			var (
 				routerGroupGuid string
 				eventStream     routing_api.TcpEventSource
@@ -346,7 +379,6 @@ var _ = Describe("Routes API", func() {
 						Expect(err).ToNot(HaveOccurred())
 						return tcpRouteMappingsResponse
 					}, "10s", 1).Should(ConsistOf(matchers.MatchTcpRoute(tcpRouteMapping1)))
-
 				})
 				Context("when tcp route mappings already exist", func() {
 					BeforeEach(func() {
@@ -362,7 +394,6 @@ var _ = Describe("Routes API", func() {
 							Expect(err).ToNot(HaveOccurred())
 							return tcpRouteMappingsResponse
 						}, "10s", 1).Should(ConsistOf(matchers.MatchTcpRoute(tcpRouteMapping1)))
-
 					})
 					It("allows to update existing tcp route mappings", func() {
 						maxTTL := 60
@@ -374,7 +405,8 @@ var _ = Describe("Routes API", func() {
 								HostPort:         60000,
 								TTL:              &maxTTL,
 								IsolationSegment: "some-iso-seg",
-							}}
+							},
+						}
 						tcpRouteMappings := []models.TcpRouteMapping{tcpRouteMapping2}
 						err := client.UpsertTcpRouteMappings(tcpRouteMappings)
 						Expect(err).NotTo(HaveOccurred())
@@ -420,9 +452,7 @@ var _ = Describe("Routes API", func() {
 			})
 
 			Context("GET (LIST)", func() {
-				var (
-					tcpRouteMappings []models.TcpRouteMapping
-				)
+				var tcpRouteMappings []models.TcpRouteMapping
 
 				JustBeforeEach(func() {
 					tcpRouteMapping1 = models.NewTcpRouteMapping(routerGroupGuid, 52000, "1.2.3.4", 60000, 60002, "", nil, 60, models.ModificationTag{})

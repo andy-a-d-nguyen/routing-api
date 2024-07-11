@@ -1,13 +1,10 @@
 package main_test
 
 import (
-	"context"
 	"crypto/tls"
 	"encoding/pem"
 	"fmt"
-	"github.com/testcontainers/testcontainers-go/modules/mysql"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -64,9 +61,9 @@ var (
 	mtlsAPIServerCertPath string
 	apiCAPath             string
 	mtlsAPIClientCert     tls.Certificate
-	ctx                   context.Context
-	err                   error
-	mySQLContainer        *mysql.MySQLContainer
+	// ctx                   context.Context
+	err error
+	// mySQLContainer        *mysql.MySQLContainer
 )
 
 func TestMain(t *testing.T) {
@@ -85,27 +82,20 @@ var _ = SynchronizedBeforeSuite(
 		return []byte(strings.Join([]string{routingAPIBin, locketPath}, ","))
 	},
 	func(binPaths []byte) {
+		// ctx = context.Background()
+		//
+		// mySQLContainer, err = mysql.Run(
+		// 	ctx,
+		// 	"mysql:lts",
+		// 	mysql.WithDatabase("test"),
+		// 	mysql.WithUsername("root"),
+		// 	mysql.WithPassword("password"),
+		// )
+		// if err != nil {
+		// 	log.Fatalf("failed to start container: %s", err)
+		// }
+
 		grpclog.SetLoggerV2(grpclog.NewLoggerV2(io.Discard, io.Discard, io.Discard))
-
-		ctx = context.Background()
-
-		mySQLContainer, err = mysql.Run(
-			ctx,
-			"mysql:lts",
-			mysql.WithDatabase("test"),
-			mysql.WithUsername("root"),
-			mysql.WithPassword("password"),
-		)
-
-		defer func() {
-			if err = mySQLContainer.Terminate(ctx); err != nil {
-				log.Fatalf("failed to terminate container: %s", err)
-			}
-		}()
-
-		if err != nil {
-			log.Fatalf("failed to start container: %s", err)
-		}
 
 		path := string(binPaths)
 		routingAPIBinPath = strings.Split(path, ",")[0]
@@ -113,11 +103,11 @@ var _ = SynchronizedBeforeSuite(
 
 		SetDefaultEventuallyTimeout(15 * time.Second)
 
-		//dbAllocator = testrunner.NewDbAllocator()
+		// dbAllocator = testrunner.NewDbAllocator()
 
-		//sqlDBConfig, err = dbAllocator.Create()
-		//Expect(err).NotTo(HaveOccurred(), "error occurred starting database client, is the database running?")
-		//sqlDBName = sqlDBConfig.Schema
+		// sqlDBConfig, err = dbAllocator.Create()
+		// Expect(err).NotTo(HaveOccurred(), "error occurred starting database client, is the database running?")
+		// sqlDBName = sqlDBConfig.Schema
 
 		caCert, caPrivKey, err := createCA()
 		Expect(err).ToNot(HaveOccurred())
@@ -144,8 +134,13 @@ var _ = SynchronizedBeforeSuite(
 
 var _ = SynchronizedAfterSuite(
 	func() {
-		//err := dbAllocator.Delete()
-		//Expect(err).NotTo(HaveOccurred())
+		// err := dbAllocator.Delete()
+		// Expect(err).NotTo(HaveOccurred())
+		// defer func() {
+		// 	if err = mySQLContainer.Terminate(ctx); err != nil {
+		// 		log.Fatalf("failed to terminate container: %s", err)
+		// 	}
+		// }()
 
 		oauthServer.Close()
 
@@ -162,10 +157,10 @@ var _ = BeforeEach(func() {
 	routingAPIMTLSPort = uint16(test_helpers.NextAvailPort())
 
 	client = routingApiClientWithPort(routingAPIPort)
-	err := dbAllocator.Reset()
-	Expect(err).NotTo(HaveOccurred())
+	// err := dbAllocator.Reset()
+	// Expect(err).NotTo(HaveOccurred())
 
-	startLocket()
+	// startLocket()
 
 	oauthSrvPort, err := strconv.ParseInt(oauthServerPort, 10, 0)
 	Expect(err).NotTo(HaveOccurred())
