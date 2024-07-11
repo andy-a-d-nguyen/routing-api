@@ -3,6 +3,8 @@ package main_test
 import (
 	"context"
 	"fmt"
+	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
 	"log"
 	"net/http"
 	"os"
@@ -10,7 +12,6 @@ import (
 
 	"github.com/tedsuo/ifrit"
 	ginkgomon "github.com/tedsuo/ifrit/ginkgomon_v2"
-	"github.com/testcontainers/testcontainers-go/modules/mysql"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 
 	routing_api "code.cloudfoundry.org/routing-api"
@@ -25,32 +26,30 @@ import (
 var _ = Describe("Routes API", func() {
 	var ctx context.Context
 	var postgresContainer *postgres.PostgresContainer
-	BeforeEach(func() {
-		ctx = context.Background()
+	ctx = context.Background()
 
-		postgresContainer, err = postgres.Run(
-			ctx,
-			"docker.io/postgres:16-alpine",
-			postgres.WithDatabase("test"),
-			postgres.WithUsername("root"),
-			postgres.WithPassword("password"),
-      testcontainers.WithWaitStrategy(
-        wait.ForLog("database system is ready to accept connections")
-        )
-		)
+	postgresContainer, err = postgres.Run(
+		ctx,
+		"docker.io/postgres:16-alpine",
+		postgres.WithDatabase("test"),
+		postgres.WithUsername("root"),
+		postgres.WithPassword("password"),
+		testcontainers.WithWaitStrategy(
+			wait.ForLog("database system is ready to accept connections").
+				WithOccurrence(2).
+				WithStartupTimeout(5*time.Second),
+		),
+	)
+	if err != nil {
+		log.Fatalf("failed to start container %s", err)
+	}
+
+	defer func() {
+		err = postgresContainer.Terminate(ctx)
 		if err != nil {
-			log.Fatalf("failed to start container %s", err)
+			log.Fatalf("failed to terminate container %s", err)
 		}
-	})
-
-	AfterEach(func() {
-		defer func() {
-			err = postgresContainer.Terminate(ctx)
-			if err != nil {
-				log.Fatalf("failed to terminate container %s", err)
-			}
-		}()
-	})
+	}()
 
 	getRouterGroupGuid := func() string {
 		var routerGroups []models.RouterGroup
@@ -64,7 +63,7 @@ var _ = Describe("Routes API", func() {
 	}
 
 	TestTCPEvents := func() {
-		FContext("TCP Events", func() {
+		Context("TCP Events", func() {
 			var (
 				routerGroupGuid string
 				eventStream     routing_api.TcpEventSource
@@ -708,7 +707,7 @@ var _ = Describe("Routes API", func() {
 		}
 	}
 
-	Describe("API with MySQL", func() {
+	FDescribe("API with MySQL", func() {
 		var (
 			routingAPIProcess ifrit.Process
 			configFilePath    string
