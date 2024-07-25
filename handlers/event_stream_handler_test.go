@@ -1,6 +1,7 @@
 package handlers_test
 
 import (
+	"code.cloudfoundry.org/routing-api/metrics/metricsfakes"
 	"errors"
 
 	fake_client "code.cloudfoundry.org/routing-api/uaaclient/fakes"
@@ -14,7 +15,6 @@ import (
 	fake_db "code.cloudfoundry.org/routing-api/db/fakes"
 	"code.cloudfoundry.org/routing-api/handlers"
 	"code.cloudfoundry.org/routing-api/metrics"
-	fake_statsd "code.cloudfoundry.org/routing-api/metrics/fakes"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/vito/go-sse/sse"
@@ -27,7 +27,7 @@ var _ = Describe("EventsHandler", func() {
 		logger     *lagertest.TestLogger
 		fakeClient *fake_client.FakeTokenValidator
 		server     *httptest.Server
-		stats      *fake_statsd.FakePartialStatsdClient
+		stats      *metricsfakes.FakeStatter
 	)
 
 	var emptyCancelFunc = func() {}
@@ -39,7 +39,7 @@ var _ = Describe("EventsHandler", func() {
 		database.WatchChangesReturns(nil, nil, emptyCancelFunc)
 
 		logger = lagertest.NewTestLogger("event-handler-test")
-		stats = new(fake_statsd.FakePartialStatsdClient)
+		stats = new(metricsfakes.FakeStatter)
 		handler = *handlers.NewEventStreamHandler(fakeClient, database, logger, stats)
 	})
 

@@ -1,6 +1,7 @@
 package metrics_test
 
 import (
+	"code.cloudfoundry.org/routing-api/metrics/metricsfakes"
 	"context"
 	"os"
 	"time"
@@ -9,7 +10,6 @@ import (
 	"code.cloudfoundry.org/routing-api/db"
 	fake_db "code.cloudfoundry.org/routing-api/db/fakes"
 	. "code.cloudfoundry.org/routing-api/metrics"
-	fake_statsd "code.cloudfoundry.org/routing-api/metrics/fakes"
 	"code.cloudfoundry.org/routing-api/models"
 
 	. "github.com/onsi/ginkgo/v2"
@@ -22,7 +22,7 @@ var _ = Describe("Metrics", func() {
 		var (
 			database       *fake_db.FakeDB
 			reporter       *MetricsReporter
-			stats          *fake_statsd.FakePartialStatsdClient
+			stats          *metricsfakes.FakeStatter
 			resultsChan    chan db.Event
 			tcpResultsChan chan db.Event
 			sigChan        chan os.Signal
@@ -32,7 +32,7 @@ var _ = Describe("Metrics", func() {
 
 		BeforeEach(func() {
 			database = &fake_db.FakeDB{}
-			stats = &fake_statsd.FakePartialStatsdClient{}
+			stats = &metricsfakes.FakeStatter{}
 
 			tickChan = make(chan time.Time, 1)
 			logger := lagertest.NewTestLogger("metrics")
@@ -77,14 +77,14 @@ var _ = Describe("Metrics", func() {
 		})
 
 		verifyGaugeCall := func(statKey string, expectedCount int64, expectedRate float32, index int) {
-			totalStat, count, rate := stats.GaugeArgsForCall(index)
+			totalStat, count, rate, _ := stats.GaugeArgsForCall(index)
 			Expect(totalStat).To(Equal(statKey))
 			Expect(count).To(BeNumerically("==", expectedCount))
 			Expect(rate).To(BeNumerically("==", expectedRate))
 		}
 
 		verifyGaugeDeltaCall := func(statKey string, expectedCount int64, expectedRate float32, index int) {
-			totalStat, count, rate := stats.GaugeDeltaArgsForCall(index)
+			totalStat, count, rate, _ := stats.GaugeDeltaArgsForCall(index)
 			Expect(totalStat).To(Equal(statKey))
 			Expect(count).To(BeNumerically("==", expectedCount))
 			Expect(rate).To(BeNumerically("==", expectedRate))
@@ -169,7 +169,7 @@ var _ = Describe("Metrics", func() {
 			It("decrements the gauge", func() {
 				Eventually(stats.GaugeDeltaCallCount).Should(Equal(1))
 
-				updatedStat, count, rate := stats.GaugeDeltaArgsForCall(0)
+				updatedStat, count, rate, _ := stats.GaugeDeltaArgsForCall(0)
 				Expect(updatedStat).To(Equal(TotalHttpRoutes))
 				Expect(count).To(BeNumerically("==", -1))
 				Expect(rate).To(BeNumerically("==", 1.0))

@@ -23,7 +23,7 @@ var _ = Describe("Routes API", func() {
 		route1            models.Route
 		addr              *net.UDPAddr
 		fakeStatsdServer  *net.UDPConn
-		fakeStatsdChan    chan string
+		fakeStatsdChan    = make(chan string, 1)
 		routingAPIProcess ifrit.Process
 		configFilePath    string
 	)
