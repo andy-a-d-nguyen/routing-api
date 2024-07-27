@@ -14,8 +14,8 @@ func StartLocket(
 	locketPort uint16,
 	locketBinPath string,
 	databaseName string,
-	databaseConnectionString string,
 	caCert string,
+	databaseConnectionString string,
 ) ifrit.Process {
 	locketAddress := fmt.Sprintf("localhost:%d", locketPort)
 
