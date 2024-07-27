@@ -14,6 +14,7 @@ func StartLocket(
 	locketPort uint16,
 	locketBinPath string,
 	databaseName string,
+	databaseConnectionString string,
 	caCert string,
 ) ifrit.Process {
 	locketAddress := fmt.Sprintf("localhost:%d", locketPort)
@@ -30,7 +31,8 @@ func StartLocket(
 			)
 			cfg.DatabaseDriver = Postgres
 		default:
-			cfg.DatabaseConnectionString = fmt.Sprintf("%s:%s@/%s", MySQLUserName, MySQLPassword, databaseName)
+			//cfg.DatabaseConnectionString = fmt.Sprintf("%s:%s@/%s", MySQLUserName, MySQLPassword, databaseName)
+			cfg.DatabaseConnectionString = databaseConnectionString
 			cfg.DatabaseDriver = MySQL
 		}
 		if caCert != "" {

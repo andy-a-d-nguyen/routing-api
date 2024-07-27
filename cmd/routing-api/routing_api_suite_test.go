@@ -51,6 +51,7 @@ var (
 	mTLSAPIClientCert     tls.Certificate
 	ctx                   context.Context
 	mysqlContainer        *mysql.MySQLContainer
+	err                   error
 )
 
 func TestRoutingAPI(test *testing.T) {
@@ -124,7 +125,7 @@ var _ = SynchronizedAfterSuite(
 
 var _ = BeforeEach(func() {
 	ctx = context.Background()
-	_, err := mysql.Run(ctx,
+	mysqlContainer, err = mysql.Run(ctx,
 		"mysql:8.0.36",
 		mysql.WithDatabase("test"),
 		mysql.WithUsername(testrunner.MySQLUserName),
@@ -134,6 +135,11 @@ var _ = BeforeEach(func() {
 		log.Fatalf("failed to start container: %s", err)
 	}
 	databaseName = "test"
+	databaseConnection, err := mysqlContainer.ConnectionString(ctx)
+	if err != nil {
+		log.Fatalf("failed to connect to database: %s", err)
+	}
+
 	routingAPIPort = uint16(test_helpers.NextAvailPort())
 	routingAPIMTLSPort = uint16(test_helpers.NextAvailPort())
 
@@ -146,6 +152,7 @@ var _ = BeforeEach(func() {
 		locketBinPath,
 		databaseName,
 		os.Getenv("SQL_SERVER_CA_CERT"),
+		databaseConnection,
 		//sqlDBConfig.CACert,
 	)
 
